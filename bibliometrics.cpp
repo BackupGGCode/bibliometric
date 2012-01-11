@@ -10,33 +10,46 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    string datafile, out_directory(argv[2]);
+    string datafile, out_directory("./");
     csvreader rr;
-    rr.read(argv[1], "\t", "");
+
+    if(argc > 1){
+        datafile = argv[1];
+    }
+    else{
+        printf("Please tell me the input file name:\n");
+        cin >> datafile;
+    }
+    if(argc > 2){
+        out_directory = argv[2];
+    }
+
+
+    rr.read(datafile.c_str(), "\t", "");
     if(out_directory[out_directory.size() - 1] != '/')
         out_directory += "/";
 
-    cout << "reading file :" << argv[1] << endl;
+    cout << "reading file :" << datafile << endl;
     cout << "output folder : " << out_directory << endl;
 
-    string  author_tc_filename                = out_directory+"author_tc.csv";
-    string  year_count_filename               = out_directory+"year_count.csv";
-    string  document_type_filename            = out_directory+"document_type.csv";
-    string  year_pages_filename               = out_directory+"year_pages.csv";
-    string  year_tc_filename                  = out_directory+"year_tc.csv";
-    string  year_nr_filename                  = out_directory+"year_nr.csv";
-    string  year_subject_count_filename       = out_directory+"year_subject_count.csv";
-    string  year_publication_count_filename   = out_directory+"year_publication_count.csv";
-    string  publication_tc_count_filename     = out_directory+"publication_tc_count.csv";
-    string  year_country_count_filename       = out_directory+"year_country_count.csv";
-    string  year_cooperation_count_filename   = out_directory+"year_cooperation_count.csv";
-    string  country_relationship_filename     = out_directory+"country_relationship.csv";
-    string  author_relationship_filename      = out_directory+"author_relationship.csv";
-    string  institute_tc_filename             = out_directory+"institute_tc.csv";
-    string  institute_relationship_filename   = out_directory+"institute_relationship.csv";
-    string  year_institute_count_filename     = out_directory+"year_institute_count.csv";
-    string  year_keyword_DE_filename          = out_directory+"year_keyword_DE.csv";
-    string  year_keyword_ID_filename          = out_directory+"year_keyword_ID.csv";
+    string  author_tc_filename                = out_directory+"author_tc.txt";
+    string  year_count_filename               = out_directory+"year_count.txt";
+    string  document_type_filename            = out_directory+"document_type.txt";
+    string  year_pages_filename               = out_directory+"year_pages.txt";
+    string  year_tc_filename                  = out_directory+"year_tc.txt";
+    string  year_nr_filename                  = out_directory+"year_nr.txt";
+    string  year_subject_count_filename       = out_directory+"year_subject_count.txt";
+    string  year_publication_count_filename   = out_directory+"year_publication_count.txt";
+    string  publication_tc_count_filename     = out_directory+"publication_tc_count.txt";
+    string  year_country_count_filename       = out_directory+"year_country_count.txt";
+    string  year_cooperation_count_filename   = out_directory+"year_cooperation_count.txt";
+    string  country_relationship_filename     = out_directory+"country_relationship.txt";
+    string  author_relationship_filename      = out_directory+"author_relationship.txt";
+    string  institute_tc_filename             = out_directory+"institute_tc.txt";
+    string  institute_relationship_filename   = out_directory+"institute_relationship.txt";
+    string  year_institute_count_filename     = out_directory+"year_institute_count.txt";
+    string  year_keyword_DE_filename          = out_directory+"year_keyword_DE.txt";
+    string  year_keyword_ID_filename          = out_directory+"year_keyword_ID.txt";
 
     author_cited(rr,"AU", ";","TC",fopen(author_tc_filename.c_str(),"w"));
 
