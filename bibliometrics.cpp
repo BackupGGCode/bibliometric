@@ -33,10 +33,12 @@ int main(int argc, char *argv[])
     cout << "output folder : " << out_directory << endl;
 
     string  author_tc_filename                = out_directory+"author_tc.txt";
+    string  author_count_filename             = out_directory+"author_count.txt";
     string  year_count_filename               = out_directory+"year_count.txt";
     string  document_type_filename            = out_directory+"document_type.txt";
     string  year_pages_filename               = out_directory+"year_pages.txt";
     string  year_tc_filename                  = out_directory+"year_tc.txt";
+    string  country_tc_filename               = out_directory+"country_tc.txt";
     string  year_nr_filename                  = out_directory+"year_nr.txt";
     string  year_subject_count_filename       = out_directory+"year_subject_count.txt";
     string  year_publication_count_filename   = out_directory+"year_publication_count.txt";
@@ -50,8 +52,11 @@ int main(int argc, char *argv[])
     string  year_institute_count_filename     = out_directory+"year_institute_count.txt";
     string  year_keyword_DE_filename          = out_directory+"year_keyword_DE.txt";
     string  year_keyword_ID_filename          = out_directory+"year_keyword_ID.txt";
+    string  year_keyword_DE_and_ID_filename   = out_directory+"year_keyword_DE_and_ID.txt";
+    string  year_title_word_filename          = out_directory+"year_title_word.txt";
 
     author_cited(rr,"AU", ";","TC",fopen(author_tc_filename.c_str(),"w"));
+    year_author_count(rr,"PY", "AU", ";", fopen(author_count_filename.c_str(), "w"));
 
     /*总量分析*/
     year_count(rr, "PY", fopen(year_count_filename.c_str(),"w"));
@@ -72,6 +77,7 @@ int main(int argc, char *argv[])
     /*地域分布及国际合作*/
     year_country_count(rr,"PY","C1", ";", "[]",fopen(year_country_count_filename.c_str(),"w"));
     year_cooperation_count(rr,"PY","C1", ";", "[]", fopen(year_cooperation_count_filename.c_str(),"w"));
+    country_cited(rr,"C1", ";", "[]","TC", fopen(country_tc_filename.c_str(),"w"));
     country_relationship(rr,"C1", ";", "[]", fopen(country_relationship_filename.c_str(),"w"));
     author_relationship(rr,"AU", ";", fopen(author_relationship_filename.c_str(),"w"));
 
@@ -83,6 +89,9 @@ int main(int argc, char *argv[])
     /*关键词分析*/
     year_keyword(rr,"PY","DE", ";",fopen(year_keyword_DE_filename.c_str(),"w"));
     year_keyword(rr,"PY","ID", ";",fopen(year_keyword_ID_filename.c_str(),"w"));
+    year_dual_keyword(rr,"PY", "DE", ";", "ID", ";", fopen(year_keyword_DE_and_ID_filename.c_str(),"w"));
+
+    year_keyword(rr,"PY","TI", "\'()\",. ;",fopen(year_title_word_filename.c_str(),"w"));
 
     //year_country_count(rr,"PY","C1", ";", "[]",stdout);
     //year_field_count(rr,"PY","SO",fp);

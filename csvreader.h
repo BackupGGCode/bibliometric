@@ -10,6 +10,7 @@
 #include    "cstring"
 #include    "string"
 #include    "vector"
+#include <map>
 
 //#include    "common.h"
 
@@ -18,18 +19,18 @@ using namespace std;
 
 vector<string> break_string(
         const char *str,
-        const char *separates = ",",
-        const char *encloses = "\""){
+        const char *separators = ",",
+        const char *delimiters = "\""){
 
     vector<string> ans;
-    string tmp, sep(separates), enc(encloses);
+    string tmp, sep(separators), enc(delimiters);
     int s = strlen(str);
     bool infield = false;
     
     sep+= "\0";
 
     for(int i = 0; i <= s; ++i){
-        //if(str[i] == enclose){
+        //if(str[i] == delimiter){
         if(enc.find(str[i]) != string::npos){
             infield = !infield;
         }
@@ -38,7 +39,6 @@ vector<string> break_string(
                 tmp.push_back(str[i]);
             }
             else{
-                //if(str[i] != separate && str[i] != '\0'){
                 if(sep.find(str[i]) == string::npos && str[i] != '\0'){
                     tmp.push_back(str[i]);
                 }
@@ -49,6 +49,10 @@ vector<string> break_string(
             }
         }
     }
+    if(tmp.size() > 0){
+        ans.push_back(tmp);
+        tmp.clear();
+    }
     return ans;
 }
 
@@ -56,11 +60,15 @@ int fread_a_line(FILE* fp, string &ans){
     char tmp;
     int count = 0;
     ans.clear();
-    while((tmp = fgetc(fp)) != EOF){
+    while(!feof(fp)){
+        tmp = fgetc(fp);
         if(tmp == '\r' || tmp == '\n'){
             //cout << ans << endl;
             if(count > 0)
                 return 1;
+            else{
+                continue;
+            }
         }
         if(tmp == -17 || tmp == -69 || tmp == -65){
             //printf("got ctrl :%c[%d]\n", tmp, tmp);
@@ -74,42 +82,95 @@ int fread_a_line(FILE* fp, string &ans){
 
 class csvreader{
     public:
-        vector<string> head;
+        vector<string> header;
         vector<vector<string> >data;
+
+        csvreader():
+            indexed_column_id(0)
+        {
+            
+        }
+
+        vector<string>& operator[](int i){
+            return data[i];
+        }
+        vector<string>& operator[](const string &str){
+            return data[row_index[str]];
+        }
         /**
          * @brief 
          * read a csv file
          *
          * @param filename
          * just filename
-         * @param separate
+         * @param separator
          * the separator between fields
-         * @param enclose
+         * @param delimiter
          *
          * @return 
          */
         bool read(const char *filename,
-                const char *separate = ",",
-                const char *enclose = ""){
+                const char *separator = ",",
+                const char *delimiter = "\"",
+                bool hasHeader = true
+                ){
             FILE *fp = fopen(filename, "r");
             string buf;
-            fread_a_line(fp, buf);
-            head = break_string(buf.c_str(), separate, enclose);
+            if(hasHeader){
+                fread_a_line(fp, buf);
+                header = break_string(buf.c_str(), separator, delimiter);
+            }
             rows = 0;
             while(fread_a_line(fp, buf)){
                 ++rows;
-                data.push_back(break_string(buf.c_str(), separate, enclose));
+                data.push_back(break_string(buf.c_str(), separator, delimiter));
             }
         }
+        bool write(const char * filename,
+                   const char   separator = ',',
+                   const char   delimiter = '\"',
+                   bool hasHeader = true
+                ){
+            write(fopen(filename, "w"), separator, delimiter, hasHeader);
+            return true;
+        }
+        bool write(FILE * fp,
+                   const char   separator = ',',
+                   const char   delimiter = '\"',
+                   bool hasHeader = true
+                ){
+            if(hasHeader){
+                for(int i = 0; i < header.size(); ++i){
+                    if(i) fprintf(fp, "%c", separator);
+                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
+                    fprintf(fp, "%s", header[i].c_str());
+                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
+                }
+                fprintf(fp, "\n");
+            }
+            for( int i = 0 ; i < data.size(); ++i )
+            {
+                for( int j = 0 ; j < data[i].size(); ++j )
+                {
+                    if(j) fprintf(fp, "%c", separator);
+                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
+                    fprintf(fp, "%s", data[i][j].c_str());
+                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
+                }
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+
         /**
          * @brief 
          * show the csv table
          */
         void show(){
-            int s1 = head.size();
+            int s1 = header.size();
             for( int i = 0 ; i < s1 ; ++i )
             {
-                cout << head[i] << '|';
+                cout << header[i] << '|';
             }
             cout << "\n--------------------------\n";
 
@@ -134,13 +195,13 @@ class csvreader{
          * -1 if not found the field name
          */
         int getFieldIndex(const char* field)const{
-            int s = head.size();
+            int s = header.size();
             for( int i = 0 ; i < s ; ++i )
             {
-                if(strcmp(head[i].c_str(), field) == 0)
+                if(strcmp(header[i].c_str(), field) == 0)
                     return i;
                 else{
-                    //printf("%s(%d)!=%s(%d)\n", head[i].c_str(), strlen(head[i].c_str()), field,strlen(field) );
+                    //printf("%s(%d)!=%s(%d)\n", header[i].c_str(), strlen(head[i].c_str()), field,strlen(field) );
                 }
             }
             return -1;
@@ -200,6 +261,14 @@ class csvreader{
         }
     private:
         int rows;
+        int indexed_column_id;
+        map<string, int> row_index;
+
+        void rebuild_row_index(){
+            for(int i = 0; i < data.size(); ++i){
+                //row_index[data[indexed_column_id]] = i;
+            }
+        }
 };
 
 

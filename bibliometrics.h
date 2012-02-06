@@ -89,6 +89,7 @@ int string2int(const string &s){
     return ans;
 }
 
+
 void author_cited(
         const csvreader & csv,
         const char *author_field,
@@ -399,6 +400,139 @@ void country_relationship(
     }
 }
 
+void year_author_count(
+        const csvreader & csv,
+        const char *year_field, 
+        const char *author_field,
+        const char * author_separator,
+        FILE *out
+        ){
+    /* 
+     * check the csv data
+     */
+    int year_index = csv.getFieldIndex(year_field);
+    int author_index = csv.getFieldIndex(author_field);
+
+    if(     year_index < 0 ||
+            author_index < 0 || 
+            strlen(author_field) < 1 ||
+            strlen(year_field) < 1
+            ){
+        fprintf(out, "NULL\n");
+    }
+    else{
+        /*
+         * get the field value
+         */
+        vector< string> years = csv.getCol(year_index);
+        vector<string> authors = csv.getCol(author_index);
+
+        map<string, int>author_total_pub;//record the answers;
+        map<string, int>first_author_total_pub;//record the answers;
+        map<string, int>author_total_ip_pub;//record the answers;
+        map<string, int>author_total_cp_pub;//record the answers;
+        map<string, map<int, int> > author_year_count;
+        map<int, map<string, int> > year_author_count;
+        map<int, int>year_author_per_paper;
+        map<int, int>year_paper_count;
+        map<int, int>year_author_net_count;
+
+        set<string> author_names;
+
+
+        int year, min_year, max_year;
+
+        year = min_year = max_year = string2int(years[0]);
+        for( int i = 0 ; i < years.size() ; ++i )
+        {
+            year = string2int(years[i]);
+            min_year = min(min_year, year);
+            max_year = max(max_year, year);
+
+            vector<string>tmp = break_string(authors[i].c_str(),author_separator,"");
+            for(int j = 0 ; j < tmp.size(); ++j){
+                trim(tmp[j]);
+                to_upper(tmp[j]);
+                author_names.insert(tmp[j]);
+            }
+
+            /* first author total publication */
+            first_author_total_pub[tmp[0]] += 1;
+
+            /* author total publication */
+            for(int j = 0 ; j < tmp.size(); ++j){
+                author_total_pub[tmp[j]] += 1;
+            }
+
+            /* author's ip and cp*/
+            if(tmp.size() > 1){
+                for(int j = 0 ; j < tmp.size(); ++j){
+                    author_total_cp_pub[tmp[j]] += 1;
+                }
+            }
+            else{
+                for(int j = 0 ; j < tmp.size(); ++j){
+                    author_total_ip_pub[tmp[j]] += 1;
+                }
+            }
+
+            /* author-year count */
+            for(int j = 0 ; j < tmp.size(); ++j){
+                author_year_count[tmp[j]][year] += 1;
+                year_author_count[year][tmp[j]] += 1;
+            }
+
+            year_author_per_paper[year] += tmp.size();
+            year_paper_count[year] += 1;
+
+        }
+        /********************
+         *  start output
+         *
+         *******************/
+        fprintf(out, "THIS INCLUDE :\n\tAnnual statistical\n\tAuthor statistical\n");
+        /*
+         * year's count
+         */
+        fprintf(out, "Annual STAT:\n");
+        fprintf(out, "year\tau count\tau per paper\n");
+        for(int y = min_year; y <= max_year;++y){
+            fprintf(out, "%d\t%d\t%f\n",
+                    y, year_author_count[y].size(), 
+                    1.0 * year_author_per_paper[y] / year_paper_count[y]);
+        }
+        fprintf(out, "\n\n\n");
+
+        /*
+         * author info
+         */
+        fprintf(out, "AUTHORS' statistical :\n");
+        fprintf(out, "author\ttotal public\tfirst au public\tip pub\tcp pub");
+        for(int y = min_year; y <= max_year;++y){
+            fprintf(out, "\t%d", y);
+        }
+        fprintf(out, "\n");
+
+        for(set<string>::iterator it = author_names.begin();
+                it != author_names.end();
+                ++it){
+            fprintf(out, "%s\t%d\t%d\t%d\t%d",
+                    it->c_str(), author_total_pub[*it],
+                    first_author_total_pub[*it],
+                    author_total_ip_pub[*it],
+                    author_total_cp_pub[*it]
+                    );
+            for(int y = min_year; y <= max_year;++y){
+                fprintf(out, "\t%d", author_year_count[*it][y]);
+            }
+            fprintf(out, "\n");
+        }
+        /**************************/
+        fprintf(out, "END\n");
+    }
+    fclose(out);
+}
+
 void author_relationship(
         const csvreader & csv, 
         const char *author_field, 
@@ -542,6 +676,107 @@ void publication_tc_count(
     }
 }
 
+void country_cited(
+        const csvreader & csv, 
+        const char *address_field, 
+        const char *address_separator, 
+        const char *address_enclosor, 
+        const char * total_cited_field,
+        FILE *out
+        ){
+    /* 
+     * check the csv data
+     */
+    int address_index = csv.getFieldIndex(address_field);
+    int total_cited_index = csv.getFieldIndex(total_cited_field);
+
+    if(address_index < 0 || total_cited_index < 0 || strlen(address_field) < 1 || strlen(total_cited_field) < 1){
+        fprintf(out, "NULL\n");
+    }
+    else{
+        /*
+         * get the field value
+         */
+        vector<string>  addresses = csv.getCol(address_index);
+        vector<string> cited = csv.getCol(total_cited_index);
+        set<string> country_names;
+
+        vector<string>countries;
+        set<string>country_set;
+
+        map<string, int> country_cp_tc;
+        map<string, int> country_ip_tc;
+        map<string, int> country_cp_count;
+        map<string, int> country_ip_count;
+
+        map<string, int>country_total_cited;//record the answers;
+        map<string, int>first_country_total_cited;//record the answers;
+        map<string, int>country_pub_count;//record the answers;
+        map<string, int>first_country_pub_count;//record the answers;
+
+        /* start review each item   */
+        for( int i = 0 ; i < addresses.size() ; ++i ){
+            if(addresses[i].size() < 1)
+                continue;
+            countries = get_countries_from_address(
+                    addresses[i],address_separator,address_enclosor);
+            /* check if it is collaborative */
+            country_set.clear();
+            for(int j = 0; j < countries.size(); ++j){
+                trim(countries[j]);
+                country_set.insert(countries[j]);
+            }
+
+            first_country_total_cited[countries[0]] += string2int(cited[i]);
+            first_country_pub_count[countries[0]] += 1;
+            for(set<string>::iterator it = country_set.begin();it != country_set.end(); ++it){
+                country_total_cited[*it] += string2int(cited[i]);
+                country_pub_count[*it] += 1;
+                country_names.insert(*it);
+            }
+
+            /********************************/
+            /*  count country-year-cp/ip    */
+            /********************************/
+            if(country_set.size() == 1){/* is independent publication*/
+                for(set<string>::iterator it = country_set.begin();it != country_set.end(); ++it)
+                {
+                    country_ip_count[*it] += 1;
+                    country_ip_tc[*it] += string2int(cited[i]);
+                }
+            }
+            else if(country_set.size() > 1){
+                /* is international collaborative publication */
+                for(set<string>::iterator it = country_set.begin();it != country_set.end(); ++it)
+                {
+                    country_cp_count[*it] += 1;
+                    country_cp_tc[*it] += string2int(cited[i]);
+                }
+            }
+        }
+        /*
+         * print out
+         */
+        fprintf(out, "Country\tTOTAL CITED\tFIRST- TOTAL CITED\tMEAN CITED\tFIRST- MEAN CITED RANK\tIP Count\tIP total cited\tIP mean cited\tCP Count\tCP total cited\tCP mean cited\tCP / IP\n");
+
+        for(set<string>::iterator it = country_names.begin(); it != country_names.end(); ++it){
+            fprintf(out, "%s\t%d\t%d\t%f\t%f\t%d\t%d\t%f\t%d\t%d\t%f\t%f\n", it->c_str(), 
+                    country_total_cited[*it], first_country_total_cited[*it],
+                    (country_pub_count[*it]) ? 1.0 * country_total_cited[*it] / country_pub_count[*it] : 0,
+                    (first_country_pub_count[*it]) ? 1.0 * first_country_total_cited[*it] / first_country_pub_count[*it] : 0,
+                    country_ip_count[*it],
+                    country_ip_tc[*it],
+                    (country_ip_count[*it]) ? 1.0 * country_ip_tc[*it] / country_ip_count[*it] : 0,
+                    country_cp_count[*it],
+                    country_cp_tc[*it],
+                    (country_cp_count[*it]) ? 1.0 * country_cp_tc[*it] / country_cp_count[*it] : 0,
+                    (country_ip_count[*it]) ? 1.0 * country_cp_count[*it] / country_ip_count[*it] : 0
+                    );
+        }                 
+
+        fprintf(out, "END(ATTENTION: some items havs no address won't be counted)\n");
+    }
+}
 
 void year_cooperation_count(
         const csvreader & csv, 
@@ -1092,6 +1327,99 @@ void year_field_count(
 }
 
 
+void year_dual_keyword(
+        const csvreader &csv,
+        const char * year_field_name,
+        const char * keyword1_field_name, 
+        const char * keyword1_field_separator,
+        const char * keyword2_field_name, 
+        const char * keyword2_field_separator,
+        FILE* out){
+    
+    /* 
+     * check the csv data
+     */
+    int year_index = csv.getFieldIndex(year_field_name);
+    int keyword1_index = csv.getFieldIndex(keyword1_field_name);
+    int keyword2_index = csv.getFieldIndex(keyword2_field_name);
+
+    if(year_index < 0 || keyword1_index < 0|| keyword2_index < 0 
+            || strlen(year_field_name) < 1 
+            || strlen(keyword1_field_name) < 1
+            || strlen(keyword2_field_name) < 1
+            ){
+        fprintf(out, "NULL\n");
+    }
+    else{
+        /*
+         * get the field value
+         */
+        vector< string> years = csv.getCol(year_index);
+        vector<string>  keywords1 = csv.getCol(keyword1_index);
+        vector<string>  keywords2 = csv.getCol(keyword2_index);
+        map<string, map<int, int> > keyword_year_count;
+        map<string, int> keyword_count;
+        vector<string>tmp;
+        int s = years.size();
+        int year, min_year, max_year;
+
+        year = min_year = max_year = string2int(years[0]);
+        for(int i = 0; i < s; ++i){
+            year = string2int(years[i]);
+            min_year = min(min_year, year);
+            max_year = max(max_year, year);
+
+            if(keywords1[i].size() > 0){
+                tmp = break_string(keywords1[i].c_str(),keyword1_field_separator,"");
+                for(int j = 0; j < tmp.size(); ++j)
+                {
+                    trim(tmp[j]);
+                    to_lower(tmp[j]);
+                    keyword_year_count[tmp[j]][year] += 1;
+                    keyword_count[tmp[j]] += 1;
+                }
+            }
+            if(keywords2[i].size() > 0){
+                tmp = break_string(keywords2[i].c_str(),keyword2_field_separator,"");
+                for(int j = 0; j < tmp.size(); ++j)
+                {
+                    trim(tmp[j]);
+                    to_lower(tmp[j]);
+                    keyword_year_count[tmp[j]][year] += 1;
+                    keyword_count[tmp[j]] += 1;
+                }
+            }
+        }
+        /*
+         * re-sort
+         */
+        vector<pair<string, int> > keyword_count_copy(
+                keyword_count.begin(), keyword_count.end());
+        sort(keyword_count_copy.begin(), keyword_count_copy.end(), 
+                greater_second<string, int>());
+        /*
+         * print out
+         */
+
+        /* header */
+        fprintf(out, "\t");
+        for(year = min_year; year <= max_year; ++year){
+            fprintf(out, "%d\t",year);
+        }
+        fprintf(out, "count\n");
+
+        /* content */
+        for(int i = 0; i < keyword_count_copy.size(); ++i){
+            fprintf(out, "%s\t", keyword_count_copy[i].first.c_str());
+            for(year = min_year; year <= max_year; ++year){
+                fprintf(out, "%d\t", keyword_year_count[keyword_count_copy[i].first][year]);
+            }
+            fprintf(out, "%d\n", keyword_count_copy[i].second);
+        }
+        fprintf(out, "END\n");
+    }
+}
+
 void year_keyword(
         const csvreader &csv,
         const char * year_field_name,
@@ -1419,76 +1747,69 @@ void institute_cited(
          */
         vector<string> addresses = csv.getCol(address_index);
         vector<string> cited = csv.getCol(total_cited_index);
+        set<string> institute_names;
 
         map<string, int>institute_total_cited;//record the answers;
         map<string, int>first_institute_total_cited;//record the answers;
         map<string, double>institute_mean_cited;//record the answers;
         map<string, double>first_institute_mean_cited;//record the answers;
 
+        /* ip and cp*/
+        map<string, int>institute_ip_tc;//record the answers;
+        map<string, int>institute_cp_tc;//record the answers;
+        map<string, int>institute_ip_count;//record the answers;
+        map<string, int>institute_cp_count;//record the answers;
 
         for( int i = 0 ; i < addresses.size() ; ++i )
             if(addresses[i].size() > 0)
             {
                 vector<string>tmp = get_institutes_from_address(addresses[i], address_separator, "[]");
+                for(int j = 0 ; j < tmp.size(); ++j){
+                    trim(tmp[j]);
+                }
 
                 first_institute_total_cited[tmp[0]] += string2int(cited[i]);
                 first_institute_mean_cited[tmp[0]] += 1;
 
                 for(int j = 0 ; j < tmp.size(); ++j){
-                    //fprintf(out, "%s ++", tmp[j].c_str());
-                    trim(tmp[j]);
                     institute_total_cited[tmp[j]] += string2int(cited[i]);
                     institute_mean_cited[tmp[j]] += 1;
+                    institute_names.insert(tmp[j]);
+                }
+                /*************/
+                /* ip and cp */
+                /*************/
+                if(tmp.size() == 1){//ip
+                    institute_ip_tc[tmp[0]] += string2int(cited[i]);
+                    institute_ip_count[tmp[0]] += 1;
+                }
+                else{//cp
+                    for(int j = 0 ; j < tmp.size(); ++j){
+                        institute_cp_tc[tmp[j]] += string2int(cited[i]);
+                        institute_cp_count[tmp[j]] += 1;
+                    }
                 }
             }
         /********************
          *  start output
          *
          *******************/
-        fprintf(out, "THIS INCLUDE :\n\tINSTITUTE TOTAL CITED RANK\n\tFIRST INSTITUTE TOTAL CITED RANK\n\tINSTITUTE MEAN CITED RANK\n\tFIRST INSTITUTE MEAN CITED RANK\n");
+        fprintf(out, "Institute\tTOTAL CITED\tFIRST- TOTAL CITED\tMEAN CITED\tFIRST- MEAN CITED RANK\tIP Count\tIP total cited\tIP mean cited\tCP Count\tCP total cited\tCP mean cited\tCP / IP\n");
 
-        /*
-         * institute_total_cited
-         */
-        fprintf(out, "INSTITUTE TOTAL CITED RANK:\n");
-        vector<pair<string, int> > ans_copy(institute_total_cited.begin(), institute_total_cited.end());
-        sort(ans_copy.begin(), ans_copy.end(), greater_second<string, int>());
-        for(int i = 0; i < ans_copy.size(); ++i){
-            fprintf(out, "%s\t%d\n", ans_copy[i].first.c_str(), ans_copy[i].second);
-        }
-        /*
-         * first_institute_total_cited
-         */
-        fprintf(out, "FIRST INSTITUTE TOTAL CITED RANK:\n");
-        vector<pair<string, int> > ans_copy1(first_institute_total_cited.begin(), first_institute_total_cited.end());
-        sort(ans_copy1.begin(), ans_copy1.end(), greater_second<string, int>());
-        for(int i = 0; i < ans_copy1.size(); ++i){
-            fprintf(out, "%s\t%d\n", ans_copy1[i].first.c_str(), ans_copy1[i].second);
-        }
-        /*
-         * institute_mean_cited
-         */
-        fprintf(out, "INSTITUTE MEAN CITED RANK:\n");
-        for(map<string, double>::iterator it = institute_mean_cited.begin(); it != institute_mean_cited.end(); ++it){
-            it->second = institute_total_cited[it->first] / it -> second;
-        }
-        vector<pair<string, double> >ans_copy2(institute_mean_cited.begin(), institute_mean_cited.end());
-        sort(ans_copy2.begin(), ans_copy2.end(), greater_second<string, double>());
-        for(int i = 0; i < ans_copy2.size(); ++i){
-            fprintf(out, "%s\t%f\n", ans_copy2[i].first.c_str(), ans_copy2[i].second);
-        }
-        /*
-         * first_institute_mean_cited
-         */
-        fprintf(out, "FIRST INSTITUTE MEAN CITED RANK:\n");
-        for(map<string, double>::iterator it = first_institute_mean_cited.begin(); it != first_institute_mean_cited.end(); ++it){
-            it->second = first_institute_total_cited[it->first] / it -> second;
-        }
-        vector<pair<string, double> >ans_copy3(first_institute_mean_cited.begin(), first_institute_mean_cited.end());
-        sort(ans_copy3.begin(), ans_copy3.end(), greater_second<string, double>());
-        for(int i = 0; i < ans_copy3.size(); ++i){
-            fprintf(out, "%s\t%f\n", ans_copy3[i].first.c_str(), ans_copy3[i].second);
-        }
+        for(set<string>::iterator it = institute_names.begin(); it != institute_names.end(); ++it){
+            fprintf(out, "%s\t%d\t%d\t%f\t%f\t%d\t%d\t%f\t%d\t%d\t%f\t%f\n", it->c_str(), 
+                    institute_total_cited[*it], first_institute_total_cited[*it],
+                    (institute_mean_cited[*it]) ? 1.0 * institute_total_cited[*it] / institute_mean_cited[*it] : 0,
+                    (first_institute_mean_cited[*it]) ? 1.0 * first_institute_total_cited[*it] / first_institute_mean_cited[*it] : 0,
+                    institute_ip_count[*it],
+                    institute_ip_tc[*it],
+                    (institute_ip_count[*it]) ? 1.0 * institute_ip_tc[*it] / institute_ip_count[*it] : 0,
+                    institute_cp_count[*it],
+                    institute_cp_tc[*it],
+                    (institute_cp_count[*it]) ? 1.0 * institute_cp_tc[*it] / institute_cp_count[*it] : 0,
+                    (institute_ip_count[*it]) ? 1.0 * institute_cp_count[*it] / institute_ip_count[*it] : 0
+                    );
+        }                 
         fprintf(out, "END\n");
     }
     fclose(out);
