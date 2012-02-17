@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     string  year_title_word_filename          = out_directory+"year_title_word.txt";
 
     author_cited(rr,"AU", ";","TC",fopen(author_tc_filename.c_str(),"w"));
-    year_author_count(rr,"PY", "AU", ";", fopen(author_count_filename.c_str(), "w"));
+    year_author_count(rr,"PY", "AU", ";","RP" ,fopen(author_count_filename.c_str(), "w"));
 
     /*总量分析*/
     year_count(rr, "PY", fopen(year_count_filename.c_str(),"w"));

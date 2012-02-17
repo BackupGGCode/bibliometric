@@ -12,6 +12,8 @@
 #include    <algorithm>
 #include    "csvreader.h"
 
+#define for_i(i, size) for(int i = 0;i < size; ++i)
+
 using namespace std;
 //using namespace boost;
 
@@ -299,6 +301,19 @@ vector<string> get_countries_from_address(
     return ans;
 }
 
+string get_rp_name(string RP){
+    int p = -1;
+    for_i(i, RP.size()){
+        if(RP[i] == '('){
+            p = i;break;
+        }
+    }
+    RP = RP.substr(0,p);
+    trim(RP);
+    to_upper(RP);
+    return RP;
+}
+
 void showstrings(vector<string> str){
     int s = str.size();
     for( int i = 0 ; i < s ; ++i )
@@ -405,6 +420,7 @@ void year_author_count(
         const char *year_field, 
         const char *author_field,
         const char * author_separator,
+        const char *rp_field,
         FILE *out
         ){
     /* 
@@ -412,11 +428,14 @@ void year_author_count(
      */
     int year_index = csv.getFieldIndex(year_field);
     int author_index = csv.getFieldIndex(author_field);
+    int rp_index = csv.getFieldIndex(rp_field);
 
     if(     year_index < 0 ||
             author_index < 0 || 
+            rp_index < 0 || 
             strlen(author_field) < 1 ||
-            strlen(year_field) < 1
+            strlen(year_field) < 1||
+            strlen(rp_field) < 1
             ){
         fprintf(out, "NULL\n");
     }
@@ -426,16 +445,23 @@ void year_author_count(
          */
         vector< string> years = csv.getCol(year_index);
         vector<string> authors = csv.getCol(author_index);
+        vector<string> rp = csv.getCol(rp_index);
 
         map<string, int>author_total_pub;//record the answers;
         map<string, int>first_author_total_pub;//record the answers;
+
         map<string, int>author_total_ip_pub;//record the answers;
         map<string, int>author_total_cp_pub;//record the answers;
+
         map<string, map<int, int> > author_year_count;
         map<int, map<string, int> > year_author_count;
+
         map<int, int>year_author_per_paper;
         map<int, int>year_paper_count;
         map<int, int>year_author_net_count;
+
+        map<string, int>rp_author_total_pub;
+        map<int, map<string, int> > year_rp_author_count;
 
         set<string> author_names;
 
@@ -450,6 +476,7 @@ void year_author_count(
             max_year = max(max_year, year);
 
             vector<string>tmp = break_string(authors[i].c_str(),author_separator,"");
+            string rp_au_name = get_rp_name(rp[i]);
             for(int j = 0 ; j < tmp.size(); ++j){
                 trim(tmp[j]);
                 to_upper(tmp[j]);
@@ -458,6 +485,7 @@ void year_author_count(
 
             /* first author total publication */
             first_author_total_pub[tmp[0]] += 1;
+            rp_author_total_pub[rp_au_name] += 1;
 
             /* author total publication */
             for(int j = 0 ; j < tmp.size(); ++j){
@@ -475,6 +503,7 @@ void year_author_count(
                     author_total_ip_pub[tmp[j]] += 1;
                 }
             }
+            year_rp_author_count[year][rp_au_name] += 1;
 
             /* author-year count */
             for(int j = 0 ; j < tmp.size(); ++j){
@@ -495,10 +524,12 @@ void year_author_count(
          * year's count
          */
         fprintf(out, "Annual STAT:\n");
-        fprintf(out, "year\tau count\tau per paper\n");
+        fprintf(out, "year\trp au count\tau count\tau per paper\n");
         for(int y = min_year; y <= max_year;++y){
-            fprintf(out, "%d\t%d\t%f\n",
-                    y, year_author_count[y].size(), 
+            fprintf(out, "%d\t%d\t%d\t%f\n",
+                    y,
+                    year_rp_author_count[y].size(),
+                    year_author_count[y].size(), 
                     1.0 * year_author_per_paper[y] / year_paper_count[y]);
         }
         fprintf(out, "\n\n\n");
@@ -507,7 +538,7 @@ void year_author_count(
          * author info
          */
         fprintf(out, "AUTHORS' statistical :\n");
-        fprintf(out, "author\ttotal public\tfirst au public\tip pub\tcp pub");
+        fprintf(out, "author\trp total public\ttotal public\tfirst au public\tip pub\tcp pub");
         for(int y = min_year; y <= max_year;++y){
             fprintf(out, "\t%d", y);
         }
@@ -516,8 +547,10 @@ void year_author_count(
         for(set<string>::iterator it = author_names.begin();
                 it != author_names.end();
                 ++it){
-            fprintf(out, "%s\t%d\t%d\t%d\t%d",
-                    it->c_str(), author_total_pub[*it],
+            fprintf(out, "%s\t%d\t%d\t%d\t%d\t%d",
+                    it->c_str(), 
+                    rp_author_total_pub[*it],
+                    author_total_pub[*it],
                     first_author_total_pub[*it],
                     author_total_ip_pub[*it],
                     author_total_cp_pub[*it]
