@@ -20,83 +20,17 @@ using namespace std;
 vector<string> break_string(
         const char *str,
         const char *separators = ",",
-        const char *delimiters = "\""){
-
-    vector<string> ans;
-    string tmp, sep(separators), enc(delimiters);
-    int s = strlen(str);
-    bool infield = false;
-    
-    sep+= "\0";
-
-    for(int i = 0; i <= s; ++i){
-        //if(str[i] == delimiter){
-        if(enc.find(str[i]) != string::npos){
-            infield = !infield;
-        }
-        else{
-            if(infield){
-                tmp.push_back(str[i]);
-            }
-            else{
-                if(sep.find(str[i]) == string::npos && str[i] != '\0'){
-                    tmp.push_back(str[i]);
-                }
-                else{
-                    ans.push_back(tmp);
-                    tmp.clear();
-                }
-            }
-        }
-    }
-    if(tmp.size() > 0){
-        ans.push_back(tmp);
-        tmp.clear();
-    }
-    return ans;
-}
-
-int fread_a_line(FILE* fp, string &ans){
-    char tmp;
-    int count = 0;
-    ans.clear();
-    while(!feof(fp)){
-        tmp = fgetc(fp);
-        if(tmp == '\r' || tmp == '\n'){
-            //cout << ans << endl;
-            if(count > 0)
-                return 1;
-            else{
-                continue;
-            }
-        }
-        if(tmp == -17 || tmp == -69 || tmp == -65){
-            //printf("got ctrl :%c[%d]\n", tmp, tmp);
-            continue;
-        }
-        ans.push_back(tmp);
-        count ++;
-    }
-    return 0;
-}
-
+        const char *delimiters = "\"");
+int fread_a_line(FILE* fp, string &ans);
 class csvreader{
     public:
         vector<string> header;
         vector<vector<string> >data;
 
-        csvreader():
-            indexed_column_id(0)
-        {
-            
-        }
+        csvreader();
 
-        vector<string>& operator[](int i){
-            return data[i];
-        }
-        vector<string>& operator[](const string &str){
-            return data[row_index[str]];
-        }
+        vector<string>& operator[](int i);
+        vector<string>& operator[](const string &str);
         /**
          * @brief 
          * read a csv file
@@ -113,79 +47,22 @@ class csvreader{
                 const char *separator = ",",
                 const char *delimiter = "\"",
                 bool hasHeader = true
-                ){
-            FILE *fp = fopen(filename, "r");
-            string buf;
-            if(hasHeader){
-                fread_a_line(fp, buf);
-                header = break_string(buf.c_str(), separator, delimiter);
-            }
-            rows = 0;
-            while(fread_a_line(fp, buf)){
-                ++rows;
-                data.push_back(break_string(buf.c_str(), separator, delimiter));
-            }
-        }
+                );
         bool write(const char * filename,
-                   const char   separator = ',',
-                   const char   delimiter = '\"',
-                   bool hasHeader = true
-                ){
-            write(fopen(filename, "w"), separator, delimiter, hasHeader);
-            return true;
-        }
+                   const char   separator,
+                   const char   delimiter,
+                   bool hasHeader
+                );
         bool write(FILE * fp,
-                   const char   separator = ',',
-                   const char   delimiter = '\"',
-                   bool hasHeader = true
-                ){
-            if(hasHeader){
-                for(int i = 0; i < header.size(); ++i){
-                    if(i) fprintf(fp, "%c", separator);
-                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
-                    fprintf(fp, "%s", header[i].c_str());
-                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
-                }
-                fprintf(fp, "\n");
-            }
-            for( int i = 0 ; i < data.size(); ++i )
-            {
-                for( int j = 0 ; j < data[i].size(); ++j )
-                {
-                    if(j) fprintf(fp, "%c", separator);
-                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
-                    fprintf(fp, "%s", data[i][j].c_str());
-                    if(delimiter != '\0')fprintf(fp, "%c", delimiter);
-                }
-                fprintf(fp, "\n");
-            }
-            return true;
-        }
-
+                   const char   separator,
+                   const char   delimiter,
+                   bool hasHeader
+                );
         /**
          * @brief 
          * show the csv table
          */
-        void show(){
-            int s1 = header.size();
-            for( int i = 0 ; i < s1 ; ++i )
-            {
-                cout << header[i] << '|';
-            }
-            cout << "\n--------------------------\n";
-
-            s1 = data.size();
-            for( int i = 0 ; i < s1 ; ++i )
-            {
-                int s2 = data[i].size();
-                for( int j = 0 ; j < s2 ; ++j )
-                {
-                    cout << data[i][j] << "|";
-                }
-                cout << "\n--------------------------\n";
-            }
-        }
-        /**
+        void show();        /**
          * @brief 
          *
          * @param field
@@ -194,18 +71,7 @@ class csvreader{
          * get a field name's index
          * -1 if not found the field name
          */
-        int getFieldIndex(const char* field)const{
-            int s = header.size();
-            for( int i = 0 ; i < s ; ++i )
-            {
-                if(strcmp(header[i].c_str(), field) == 0)
-                    return i;
-                else{
-                    //printf("%s(%d)!=%s(%d)\n", header[i].c_str(), strlen(head[i].c_str()), field,strlen(field) );
-                }
-            }
-            return -1;
-        }
+        int getFieldIndex(const char* field)const;
         /**
          * @brief 
          *
@@ -214,13 +80,7 @@ class csvreader{
          * @return 
          * the index-th column
          */
-        vector<string> getCol(int index)const{
-            vector<string>ans;
-            for(int i = 0; i < rows; ++i){
-                ans.push_back(data[i][index]);
-            }
-            return ans;
-        }
+        vector<string> getCol(int index)const;
         /**
          * @brief 
          *
@@ -232,12 +92,7 @@ class csvreader{
          *
          * the col with the name of 'field'
          */
-        vector<string> getCol(const char* field)const{
-            int index = getFieldIndex(field);
-            if(index > -1)
-                return getCol(index);
-            else return vector<string>(0);
-        }
+        vector<string> getCol(const char* field)const;
         /**
          * @brief 
          *
@@ -246,9 +101,7 @@ class csvreader{
          * @return 
          * the index-th row of the data
          */
-        vector<string> getRow(int index){
-            return data[index];
-        }
+        vector<string> getRow(int index);
         /**
          * @brief 
          * get the row count
@@ -256,19 +109,13 @@ class csvreader{
          * @return 
          * the row count
          */
-        int rowCount(){
-            return rows;
-        }
+        int rowCount();
     private:
         int rows;
         int indexed_column_id;
         map<string, int> row_index;
 
-        void rebuild_row_index(){
-            for(int i = 0; i < data.size(); ++i){
-                //row_index[data[indexed_column_id]] = i;
-            }
-        }
+        void rebuild_row_index();
 };
 
 
