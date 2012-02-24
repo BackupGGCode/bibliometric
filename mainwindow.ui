@@ -78,7 +78,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Clear all Input files </string>
+    <string>Clean Input files </string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_4">
@@ -91,7 +91,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>ok</string>
+    <string>OK</string>
    </property>
   </widget>
  </widget>

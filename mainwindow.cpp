@@ -37,8 +37,6 @@ void MainWindow::on_pushButton_3_clicked()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    about ab;
-    ab.exec();
     //check
     if(inputfiles.size() > 0 && outputfolder.size() > 0){
         /***************************/
