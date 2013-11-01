@@ -17,7 +17,8 @@ int main(int argc, char *argv[])
         datafile = argv[1];
     }
     else{
-        printf("Please tell me the input file name:\n");
+        printf("USAGE:\n ./bibliometric <input file> <output directory>\n If you have more than one input file, ./merge them into one first\n\n");
+        printf("OR, Please tell me the input file name:\n");
         cin >> datafile;
     }
     if(argc > 2){
@@ -58,35 +59,35 @@ int main(int argc, char *argv[])
     author_cited(rr,"AU", ";","TC",fopen(author_tc_filename.c_str(),"w"));
     year_author_count(rr,"PY", "AU", ";","RP" ,fopen(author_count_filename.c_str(), "w"));
 
-    /*总量分析*/
+    /*basic statistics*/
     year_count(rr, "PY", fopen(year_count_filename.c_str(),"w"));
     year_document_type(rr,"PY","DT",fopen(document_type_filename.c_str(),"w"));
     year_pages(rr,"PY","PG",fopen(year_pages_filename.c_str(),"w"));
     year_pages(rr,"PY","TC",fopen(year_tc_filename.c_str(),"w"));
     year_pages(rr,"PY","NR",fopen(year_nr_filename.c_str(),"w"));
 
-    /*领域分析*///same as publications
+    /* subjects *///same as publications
     /*year_subject == year_keyword*/
     year_subject(rr,"PY","SC", ";",fopen(year_subject_count_filename.c_str(), "w"));
 
 
-    /*期刊分析*/
+    /*journals */
     year_publication_count(rr,"PY","SO",fopen(year_publication_count_filename.c_str(), "w"));
     publication_tc_count(rr,"SO","TC",fopen(publication_tc_count_filename.c_str(),"w"));
 
-    /*地域分布及国际合作*/
+    /*countries */
     year_country_count(rr,"PY","C1", ";", "[]",fopen(year_country_count_filename.c_str(),"w"));
     year_cooperation_count(rr,"PY","C1", ";", "[]", fopen(year_cooperation_count_filename.c_str(),"w"));
     country_cited(rr,"C1", ";", "[]","TC", fopen(country_tc_filename.c_str(),"w"));
     country_relationship(rr,"C1", ";", "[]", fopen(country_relationship_filename.c_str(),"w"));
     author_relationship(rr,"AU", ";", fopen(author_relationship_filename.c_str(),"w"));
 
-    /* 机构与合作*/
+    /* Insitute */
     institute_cited(rr,"C1",";","[]","TC",fopen(institute_tc_filename.c_str(),"w"));
     institute_relationship(rr,"C1", ";", "[]", fopen(institute_relationship_filename.c_str(),"w"));
     year_institute_count(rr,"PY","C1",";","[]",fopen(year_institute_count_filename.c_str(), "w"));
 
-    /*关键词分析*/
+    /*keyword analysis*/
     year_keyword(rr,"PY","DE", ";",fopen(year_keyword_DE_filename.c_str(),"w"));
     year_keyword(rr,"PY","ID", ";",fopen(year_keyword_ID_filename.c_str(),"w"));
     year_dual_keyword(rr,"PY", "DE", ";", "ID", ";", fopen(year_keyword_DE_and_ID_filename.c_str(),"w"));
@@ -96,5 +97,7 @@ int main(int argc, char *argv[])
     //year_country_count(rr,"PY","C1", ";", "[]",stdout);
     //year_field_count(rr,"PY","SO",fp);
     //fclose(fp);
+
+    printf("please refer to http://xuguang.info/bibliometric/  for more detail information about output result\n");
     return 0;
 } 

@@ -10,7 +10,7 @@
 #include    <iostream>
 #include    <set>
 #include    <algorithm>
-#include <QDebug>
+//#include <QDebug>
 #include    "csvreader.h"
 
 #define for_i(i, size) for(int i = 0;i < size; ++i)

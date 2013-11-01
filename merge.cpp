@@ -1,7 +1,7 @@
 /* *************************
  * Author: xg1990
  * Created Time:  
- * LastModified:  Wed 11 Jan 2012 02:48:29 PM CST
+ * LastModified:  Fri 01 Nov 2013 01:12:25 PM CST
  * C File Name: 
  * ************************/
 #include <iostream>
@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
         }
     }
     while(input.size() == 0){
-        printf("Please give me the input file names:\
+        printf("USAGE:\n ./merge -o <output file> <input txt 1> <input txt 2> ... <input txt n>\n\n\
+                OR, Please give me the input file names:\
                 \n(type \"END\" to stop input; filename cannot contain SPACE)\n");
         while(1){
             cin >> buf;
